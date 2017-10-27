@@ -61,6 +61,7 @@ while not done:
                 movement[1] -= 0.1
             if event.key == 100:
                 movement[0] -= 0.05
+            print event.key
         if event.type == pygame.KEYUP:
             if event.key == 119:
                 movement[1] = 0
@@ -94,6 +95,7 @@ while not done:
         angle = math.pi / 2
         car = [(WIDTH - carSize[0]) / 2 +
                x, (50 - carSize[1]) / 2 + y, carSize[0], carSize[1]]
+        score = 0
 
     #Drawing
     screen.fill(BLACK)
