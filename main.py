@@ -7,16 +7,18 @@ import plotly.graph_objs as go
 import datetime
 import matplotlib.pyplot as plt
 
-
-POPULATION_SIZE = 250
+# Affects Performance
+POPULATION_SIZE = 500
 MATING_POOL_PERCENTAGE = 0.05
-AMOUNT_OF_MOVES = 2000
 MUTATION_RATE = 0.005
+
+# Relates to Genetic Algorithm
+AMOUNT_OF_MOVES = 2000
 AMOUNT_OF_POPULATIONS = 1
 MAP = 0
 DRAW = 1
 
-
+# Collison points for outside of track
 Map = [[[1, 2, 22, 697], [19, 2, 864, 27], [856, 26, 27, 673], [221, 674, 641, 25],
         [198, 683, 24, 16], [13, 692, 191, 3], [21, 667, 28, 25], [49, 677, 12, 14],
         [61, 683, 11, 10], [23, 640, 10, 30], [33, 652, 7, 21], [257, 663, 89, 21], 
@@ -41,13 +43,15 @@ Map = [[[1, 2, 22, 697], [19, 2, 864, 27], [856, 26, 27, 673], [221, 674, 641, 2
         [241, 218, 18, 21], [317, 391, 26, 13], [231, 443, 56, 52], [279, 452, 30, 29], 
         [233, 481, 33, 35], [149, 519, 39, 41], [177, 512, 42, 34], [236, 404, 0, 0], [509, 632, 48, 14]],
     ]
-
+# Scoring path
 goals = [[51, 108, 74, 528], [86, 56, 216, 63], [294, 75, 57, 174], [344, 131, 27, 67], [301, 248, 50, 65],
          [332, 288, 133, 51], [463, 238, 64, 78], [507, 194, 65, 74], [547, 148, 77, 71], [603, 113, 114, 59], 
          [696, 152, 51, 61], [731, 205, 39, 56], [753, 256, 48, 160], [743, 403, 17, 87], [697, 459, 53, 65], 
          [663, 489, 47, 76], [455, 525, 229, 59], [294, 504, 181, 56], [248, 540, 62, 71], [100, 582, 159, 63]]
 
+#Populations holds all the he data to create all the cars and there driving techniques
 class Population():
+    #Pass in the varibles even though they are global to change it to run multiple populations at the same time 
     def __init__(self,POPULATION_SIZE,MATING_POOL_PERCENTAGE,AMOUNT_OF_MOVES,MUTATION_RATE):
         self.cars = []
         self.populationSize = POPULATION_SIZE
@@ -61,8 +65,10 @@ class Population():
         for i in range(self.populationSize):
             self.cars.append(Car(self.amountOfMoves))
 
-    def evaluate(self,num1):
+    #scores all the cars and normailses it
+    def evaluate(self):
         global y1, y2
+
         self.maxFit = 0
         self.matingPool = []
         self.averageFitness = 0
@@ -73,37 +79,43 @@ class Population():
             self.averageFitness += i.fitness
             i.fitness /= float(self.maxFit)
 
-        print "Population %d\nMaxium Fitness: %d\nAverage Fitness: %d\n" %(num1,self.maxFit*100, self.averageFitness/self.populationSize*100)
+        print "Maxium Fitness: %d\nAverage Fitness: %d\n" %(self.maxFit*100, self.averageFitness/self.populationSize*100)
         y1.append(self.maxFit)
         y2.append(self.averageFitness/self.populationSize)
 
+        # populates matingpool based on cars fitness
         for i in range(self.populationSize):
             n = self.cars[i].fitness * 100
             for j in range(int(n)):
                 self.matingPool.append(self.cars[i])
 
+    #Bredding is decided here
     def selection(self):
-        newCars = []
+
+        self.cars = []
+        #Mating pool is cut off to only the top X percentage of cars
         self.matingPool.sort(key=lambda x: x.fitness, reverse=True)
         self.matingPool = self.matingPool[:int(len(self.matingPool)*self.matingPoolPercentage)]
 
-        for i in range(len(self.cars)):
+        # Creates a nw populations of cars based on previous generation
+        for i in range(self.populationSize):
             parentA = random.choice(self.matingPool).dna
             parentB = random.choice(self.matingPool).dna
 
             child = Dna(parentA.cross_over(parentB),self.amountOfMoves)
             child.mutation()
 
-            newCars.append(Car(self.amountOfMoves,child))
+            self.cars.append(Car(self.amountOfMoves,child))
 
-        self.cars = newCars
-
+    # Move the cars and do the collison calulations
     def run(self):
         for i in range(self.populationSize):
             self.cars[i].update()
+    #Draws each car
     def draw(self):
         for i in range(self.populationSize):
             self.cars[i].draw()
+    #tests is all the populations is dead
     def test_crash(self):
         alive = False
         for i in range(self.populationSize):
@@ -197,8 +209,8 @@ class Car():
             if self.collide() != -1:
                 self.crashed = True
                 self.calc_fitness()
-            if pygame.Rect(self.car).colliderect(pygame.Rect([100,400,1,1])) and self.count>10:
-                self.score *= 10
+            if pygame.Rect(self.car).colliderect(pygame.Rect([100,400,1,1])) and self.count%self.loop>10:
+                self.score *= 1.1
                 self.loop = self.count+1
             
             self.count+=1
@@ -239,7 +251,6 @@ generation = 1
 #Setting up graph
 plt.ion()
 plt.title("Populations Fitness")
-# plt.axis([0,100,0,8000])
 plt.plot(y1,"C1",label="Max Fitness")
 plt.plot(y2,"C2",label="Average Fitness")
 plt.plot(y3,"C3",label="Goal Fitness")
@@ -258,7 +269,7 @@ while not done:
         if not population[i].test_crash() or lifespan==AMOUNT_OF_MOVES:
             print "Generation: %d" %generation
             y3.append(5000)
-            population[i].evaluate(i+1)
+            population[i].evaluate()
             population[i].selection()                
             plt.plot(y1,"C1",label="Max Fitness")
             plt.plot(y2,"C2",label="Average Fitness")
@@ -277,6 +288,7 @@ while not done:
         clock.tick(60)
     lifespan+=1
 pygame.quit()
+
 while True:
     try:
         plt.pause(0.05)
