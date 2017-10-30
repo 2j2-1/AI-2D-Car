@@ -123,8 +123,10 @@ class Population():
                 alive = True
         return alive
 
+#Holds all the movements of the car stored as "Dna"
 class Dna():
     def __init__(self, genes,AMOUNT_OF_MOVES):
+        # Setting new genes if none already exist
         if genes:
             self.genes = genes
         else:
@@ -132,10 +134,12 @@ class Dna():
             for i in range(AMOUNT_OF_MOVES):
                 self.genes.append([random.randint(-1,1)/10.0, 0.1])
     
+    # Breeds the cars togther
     def cross_over(self, parter):
         self.newGenes = []
         cross = random.randint(0,1)
 
+        # take altentating moves from the cars
         if cross == 0:
             self.newGenes = []
             for i in range(1,len(self.genes)-1,2):
@@ -144,11 +148,13 @@ class Dna():
                     self.newGenes.append(parter.genes[i])
                 except:
                     pass
+        # Take a random mid point and split the parents genes
         else:
             mid = random.randint(0,len(self.genes))
             self.newGenes = self.genes[:mid] + parter.genes[mid:]
         return self.newGenes
 
+    # Adds random Dna to the mix that was present in the intaial spawn
     def mutation(self):
 
         for i in range(len(self.genes)):
@@ -156,6 +162,7 @@ class Dna():
                 self.genes[i]=[random.randint(-1,1)/10.0, 0.1]
 
 class Car():
+    # Each car holds all the stats related to it
     def __init__(self,AMOUNT_OF_MOVES,dna = None):
         self.x = 0
         self.y = 0
@@ -177,14 +184,17 @@ class Car():
         self.center = 0
         self.count1 = 0
 
+    # Score is weighted 5* compared to count 
     def calc_fitness(self):
         self.fitness = self.score*5
         self.fitness += self.count
-      
+    
+    #Tests collisions with the edge of the map
     def collide(self):
         a = pygame.Rect(self.car)
         return a.collidelist(Map[MAP])
-          
+        
+    # Does all the calculations of the car
     def update(self):
         if not self.crashed:
             self.movement = self.dna.genes[self.count%self.loop]
@@ -215,12 +225,12 @@ class Car():
             
             self.count+=1
     
-
+    # Draws if not crashed
     def draw(self):
         if not self.crashed:
             pygame.draw.rect(screen, WHITE, self.car)
 
-
+# Pygame constants
 pygame.init()
 BLACK = [0, 0, 0]
 WHITE = [255, 255, 255]
@@ -232,7 +242,9 @@ screen = pygame.display.set_mode(SIZE)
 pygame.display.set_caption("Car GA")
 clock = pygame.time.Clock()
 done = False
+
 lifespan = 0
+# Matplotlib setup
 y1 = []
 y2 = []
 y3 = []
@@ -244,6 +256,7 @@ cars = []
 population = []
 carSize = [5, 10]
 
+# Creats the population
 for i in range(AMOUNT_OF_POPULATIONS):
     population.append(Population(POPULATION_SIZE,MATING_POOL_PERCENTAGE,AMOUNT_OF_MOVES,MUTATION_RATE))
 generation = 1
@@ -257,13 +270,13 @@ plt.plot(y3,"C3",label="Goal Fitness")
 plt.legend()
 
 while not done:
-
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             done = True
         if event.type == pygame.KEYDOWN:
             if event.key==32:
                 DRAW = not DRAW
+    # Runs each population 
     for i in range(len(population)):
         population[i].run()
         if not population[i].test_crash() or lifespan==AMOUNT_OF_MOVES:
@@ -279,6 +292,7 @@ while not done:
             generation+=1
             lifespan = 0
     # Drawing
+    # Stops drawing to speed up sketch
     if DRAW:
         screen.blit(BackGround[MAP], [0,0])
         for i in population:
