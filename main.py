@@ -281,7 +281,6 @@ while not done:
         population[i].run()
         if not population[i].test_crash() or lifespan==AMOUNT_OF_MOVES:
             print "Generation: %d" %generation
-            y3.append(5000)
             population[i].evaluate()
             population[i].selection()                
             plt.plot(y1,"C1",label="Max Fitness")
